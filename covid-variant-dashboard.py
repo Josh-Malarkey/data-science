@@ -7,18 +7,12 @@ https://github.com/Coding-with-Adam/Dash-by-Plotly/tree/master/Dash%20Components
 https://www.youtube.com/watch?v=UYH_dNSX1DM
 """
 
-from base64 import b64encode
 import dash
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
-import io
 import pandas
 import plotly.graph_objects as go
-import plotly.express as px
-import webbrowser
-
-buffer = io.StringIO()
 
 # import and transform the data for the way we need it in order to create the dashboard
 variants = ['Beta','Alpha','Gamma','Delta','Kappa','Epsilon','Eta','Iota','Lambda','others']
@@ -30,11 +24,10 @@ country_dict = []
 for country in countries:
     country_dict.append({'label': country, 'value': country})
 
-html_bytes = buffer.getvalue().encode()
-encoded = b64encode(html_bytes).decode()
-
-# create the dashboard as an app
+# create the dashboard as an app and initialize server
 app = dash.Dash(__name__)
+server = app.server
+
 app.layout = html.Div([
     # div for dropdown
     html.Div([
@@ -57,6 +50,16 @@ app.layout = html.Div([
     # div for graph
     html.Div([
         dcc.Graph(id='covid_variant_graph')
+    ]),
+    # div for data source
+    html.Div([
+        html.Span(['Data Source: '], style={'font-size': '16px', 'font-weight':'bold'}),
+        html.A('https://github.com/owid/covid-19-data/blob/master/public/data/variants/covid-variants.csv',
+               href='https://github.com/owid/covid-19-data/blob/master/public/data/variants/covid-variants.csv'
+               , target='_blank'),
+        html.Br(),
+        html.P('*** This chart is sourced directly from the repository so it will update when new data is uploaded ***'
+               , style={'font-size':'12px', 'font-weight':'bold'})
     ])
 ])
 
@@ -101,7 +104,7 @@ def build_dash(country):
                     xref='paper',
                     yref='paper',
                     x=1,
-                    y=1.2
+                    y=1.15
                 ),
                 go.layout.Annotation(
                     text='Slide dates on x-axis to update chart zoom',
@@ -117,11 +120,11 @@ def build_dash(country):
             ]
     )
     fig = go.Figure(data=trace_lines, layout=layout)
+    fig.update_layout(title_font_size=24, title_x=0.5)
     fig.update_xaxes(title_text='Date')
     fig.update_yaxes(title_text='Number of Sequences')
     return fig
 
 
-port = 5000
-# webbrowser.open_new("http://localhost:{}".format(port))
-app.run_server(debug=True, port=port)
+if __name__ == '__main__':
+    app.run_server(debug=True)
